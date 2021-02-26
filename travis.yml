@@ -1,0 +1,26 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t barry/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run barry/react-test npm test -- --coverage
+
+
+after_success:
+  - docker build -t barry/multi-client ./client
+  - docker build -t barry.multi-nginx ./nginx
+  - docker build -t barry/multi-server ./server
+  - docker build -t barry.multi-worker ./worker
+
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+
+  # Take those images and push them to docker-hub
+  - docker push -t barry/multi-client
+  - docker push -t barry.multi-nginx
+  - docker push -t barry/multi-server
+  - docker push -t barry.multi-worker
